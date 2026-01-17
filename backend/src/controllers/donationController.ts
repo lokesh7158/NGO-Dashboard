@@ -5,10 +5,10 @@ import { DonationStatus } from "../generated/prisma/client";
 
 export const initiateDonation = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const user = req.user;
     const { amount } = req.body;
 
-    if (!userId) {
+    if (!user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -18,7 +18,7 @@ export const initiateDonation = async (req: AuthRequest, res: Response) => {
 
     const donation = await prisma.donation.create({
       data: {
-        userId,
+        userId: user.id,
         amount,
         status: DonationStatus.PENDING,
         paymentGateway: "MOCK",

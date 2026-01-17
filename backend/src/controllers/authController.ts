@@ -4,7 +4,8 @@ import prisma from "../utils/prisma";
 import { generateToken } from "../utils/jwt";
 
 export const register = async (req: Request, res: Response) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, phone, address, additionalInfo } =
+    req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields required" });
@@ -23,6 +24,9 @@ export const register = async (req: Request, res: Response) => {
       email,
       passwordHash,
       role,
+      phone,
+      address,
+      additionalInfo,
     },
   });
 

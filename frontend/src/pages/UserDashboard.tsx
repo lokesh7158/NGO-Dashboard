@@ -24,7 +24,9 @@ const UserDashboard = () => {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [donationAmount, setDonationAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "donations">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "donations">(
+    "overview",
+  );
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [registrationData, setRegistrationData] = useState({
     phone: "",
@@ -32,7 +34,6 @@ const UserDashboard = () => {
     additionalInfo: "",
   });
 
-  // Fetch user registration details
   useEffect(() => {
     const fetchRegistration = async () => {
       try {
@@ -45,7 +46,6 @@ const UserDashboard = () => {
     fetchRegistration();
   }, []);
 
-  // Fetch user donations when donations tab is active
   useEffect(() => {
     if (activeTab === "donations") {
       const fetchDonations = async () => {
@@ -60,7 +60,6 @@ const UserDashboard = () => {
     }
   }, [activeTab]);
 
-  // Handle registration
   const handleRegister = async () => {
     if (!registrationData.phone || !registrationData.address) {
       alert("Please fill in all required fields");
@@ -78,7 +77,6 @@ const UserDashboard = () => {
     }
   };
 
-  // Handle donation
   const handleDonate = async () => {
     if (!donationAmount || parseFloat(donationAmount) <= 0) {
       alert("Please enter a valid donation amount");
@@ -89,17 +87,16 @@ const UserDashboard = () => {
       const res = await API.post("/donation/initiate", {
         amount: parseFloat(donationAmount),
       });
-      
+
       // Simulate payment gateway callback (in real scenario, this would be from gateway)
       const updatedRes = await API.post("/donation/callback", {
         donationId: res.data.donationId,
         status: "SUCCESS",
       });
-      
-      // Refresh donations list
+
       const donationsRes = await API.get("/donation/me");
       setDonations(donationsRes.data.donations);
-      
+
       setDonationAmount("");
       alert("Donation successful! Thank you for your generous contribution.");
     } catch (err: any) {
@@ -109,7 +106,6 @@ const UserDashboard = () => {
     }
   };
 
-  // Calculate total donated amount
   const totalDonated = donations
     .filter((d) => d.status === "SUCCESS")
     .reduce((sum, d) => sum + d.amount, 0);
@@ -135,7 +131,6 @@ const UserDashboard = () => {
           User Dashboard
         </h1>
 
-        {/* Tab Navigation */}
         <div
           style={{
             display: "flex",
@@ -170,10 +165,8 @@ const UserDashboard = () => {
           ))}
         </div>
 
-        {/* Overview Tab */}
         {activeTab === "overview" && (
           <div>
-            {/* Registration Section */}
             <div style={{ marginBottom: "40px" }}>
               <h2
                 style={{
@@ -192,7 +185,8 @@ const UserDashboard = () => {
                   style={{
                     padding: "25px",
                     borderRadius: "12px",
-                    background: "linear-gradient(135deg, #141928 0%, #1a2244 100%)",
+                    background:
+                      "linear-gradient(135deg, #141928 0%, #1a2244 100%)",
                     border: "1px solid #2d3561",
                     boxShadow: "0 0 20px rgba(0, 212, 255, 0.1)",
                   }}
@@ -200,7 +194,8 @@ const UserDashboard = () => {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(250px, 1fr))",
                       gap: "20px",
                     }}
                   >
@@ -209,7 +204,9 @@ const UserDashboard = () => {
                       { label: "🏠 Address", value: registration.address },
                       {
                         label: "📅 Registered On",
-                        value: new Date(registration.createdAt).toLocaleDateString(),
+                        value: new Date(
+                          registration.createdAt,
+                        ).toLocaleDateString(),
                       },
                     ].map((item, idx) => (
                       <div key={idx}>
@@ -238,7 +235,13 @@ const UserDashboard = () => {
                     ))}
                   </div>
                   {registration.additionalInfo && (
-                    <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #2d3561" }}>
+                    <div
+                      style={{
+                        marginTop: "20px",
+                        paddingTop: "20px",
+                        borderTop: "1px solid #2d3561",
+                      }}
+                    >
                       <p
                         style={{
                           margin: "0 0 8px 0",
@@ -261,7 +264,8 @@ const UserDashboard = () => {
                   style={{
                     padding: "30px",
                     borderRadius: "12px",
-                    background: "linear-gradient(135deg, #2a1f0d 0%, #3a2a1a 100%)",
+                    background:
+                      "linear-gradient(135deg, #2a1f0d 0%, #3a2a1a 100%)",
                     border: "1px solid #5a4a2a",
                     boxShadow: "0 0 20px rgba(255, 165, 0, 0.1)",
                   }}
@@ -273,7 +277,8 @@ const UserDashboard = () => {
                       color: "#ffa500",
                     }}
                   >
-                    ⚠️ You haven't registered yet. Please complete your registration.
+                    ⚠️ You haven't registered yet. Please complete your
+                    registration.
                   </p>
                   <div
                     style={{
@@ -287,7 +292,10 @@ const UserDashboard = () => {
                       placeholder="Phone Number"
                       value={registrationData.phone}
                       onChange={(e) =>
-                        setRegistrationData({ ...registrationData, phone: e.target.value })
+                        setRegistrationData({
+                          ...registrationData,
+                          phone: e.target.value,
+                        })
                       }
                       style={{
                         padding: "12px 16px",
@@ -299,7 +307,10 @@ const UserDashboard = () => {
                       placeholder="Address"
                       value={registrationData.address}
                       onChange={(e) =>
-                        setRegistrationData({ ...registrationData, address: e.target.value })
+                        setRegistrationData({
+                          ...registrationData,
+                          address: e.target.value,
+                        })
                       }
                       style={{
                         padding: "12px 16px",
@@ -328,7 +339,8 @@ const UserDashboard = () => {
                         padding: "12px 24px",
                         fontSize: "16px",
                         fontWeight: "600",
-                        background: "linear-gradient(135deg, #00ff88 0%, #00cc66 100%)",
+                        background:
+                          "linear-gradient(135deg, #00ff88 0%, #00cc66 100%)",
                         color: "#0a0e27",
                         border: "none",
                         borderRadius: "8px",
@@ -338,20 +350,24 @@ const UserDashboard = () => {
                       }}
                       onMouseEnter={(e) => {
                         if (!registrationLoading)
-                          (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+                          (
+                            e.currentTarget as HTMLButtonElement
+                          ).style.transform = "translateY(-2px)";
                       }}
                       onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                        (e.currentTarget as HTMLButtonElement).style.transform =
+                          "translateY(0)";
                       }}
                     >
-                      {registrationLoading ? "Registering..." : "✓ Complete Registration"}
+                      {registrationLoading
+                        ? "Registering..."
+                        : "✓ Complete Registration"}
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Donation Section */}
             <div>
               <h2
                 style={{
@@ -369,7 +385,8 @@ const UserDashboard = () => {
                 style={{
                   padding: "30px",
                   borderRadius: "12px",
-                  background: "linear-gradient(135deg, #1a1f2e 0%, #242a3a 100%)",
+                  background:
+                    "linear-gradient(135deg, #1a1f2e 0%, #242a3a 100%)",
                   border: "1px solid #2d3561",
                   boxShadow: "0 0 20px rgba(0, 212, 255, 0.1)",
                 }}
@@ -381,7 +398,8 @@ const UserDashboard = () => {
                     color: "#7a8ab3",
                   }}
                 >
-                  Contribute to our cause with any amount. Every rupee helps us make a difference.
+                  Contribute to our cause with any amount. Every rupee helps us
+                  make a difference.
                 </p>
                 <div
                   style={{
@@ -412,7 +430,8 @@ const UserDashboard = () => {
                       padding: "12px 28px",
                       fontSize: "16px",
                       fontWeight: "600",
-                      background: "linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%)",
+                      background:
+                        "linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%)",
                       color: "#ffffff",
                       border: "none",
                       borderRadius: "8px",
@@ -422,17 +441,19 @@ const UserDashboard = () => {
                     }}
                     onMouseEnter={(e) => {
                       if (!loading)
-                        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+                        (e.currentTarget as HTMLButtonElement).style.transform =
+                          "translateY(-2px)";
                     }}
                     onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                      (e.currentTarget as HTMLButtonElement).style.transform =
+                        "translateY(0)";
                     }}
                   >
                     {loading ? "Processing..." : "❤️ Donate Now"}
                   </button>
                 </div>
                 <p style={{ fontSize: "12px", color: "#7a8ab3", margin: "0" }}>
-                  ✓ Secure payment processing | ✓ Tax receipt provided | ✓ Your donation makes an impact
+                  ✓ Secure payment processing | ✓ Your donation makes an impact
                 </p>
               </div>
             </div>
@@ -502,7 +523,12 @@ const UserDashboard = () => {
                 >
                   <thead>
                     <tr style={{ backgroundColor: "#1a2244" }}>
-                      {["Amount", "Status", "Transaction ID", "Date & Time"].map((header) => (
+                      {[
+                        "Amount",
+                        "Status",
+                        "Transaction ID",
+                        "Date & Time",
+                      ].map((header) => (
                         <th
                           key={header}
                           style={{
@@ -526,16 +552,20 @@ const UserDashboard = () => {
                       <tr
                         key={donation.id}
                         style={{
-                          backgroundColor: idx % 2 === 0 ? "#0f131f" : "#141928",
+                          backgroundColor:
+                            idx % 2 === 0 ? "#0f131f" : "#141928",
                           borderBottom: "1px solid #2d3561",
                           transition: "all 0.3s ease",
                         }}
                         onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                            "#1f2a45";
+                          (
+                            e.currentTarget as HTMLTableRowElement
+                          ).style.backgroundColor = "#1f2a45";
                         }}
                         onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
+                          (
+                            e.currentTarget as HTMLTableRowElement
+                          ).style.backgroundColor =
                             idx % 2 === 0 ? "#0f131f" : "#141928";
                         }}
                       >
@@ -599,7 +629,7 @@ const UserDashboard = () => {
                   backgroundColor: "#141928",
                   border: "1px solid #2d3561",
                   textAlign: "center",
-              }}
+                }}
               >
                 <p
                   style={{
@@ -608,7 +638,8 @@ const UserDashboard = () => {
                     color: "#7a8ab3",
                   }}
                 >
-                  💝 No donations yet. Make your first donation and make a difference!
+                  💝 No donations yet. Make your first donation and make a
+                  difference!
                 </p>
                 <button
                   onClick={() => setActiveTab("overview")}
@@ -617,7 +648,8 @@ const UserDashboard = () => {
                     padding: "12px 24px",
                     fontSize: "15px",
                     fontWeight: "600",
-                    background: "linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%)",
+                    background:
+                      "linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%)",
                     color: "#ffffff",
                     border: "none",
                     borderRadius: "8px",
@@ -625,10 +657,12 @@ const UserDashboard = () => {
                     transition: "all 0.3s ease",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+                    (e.currentTarget as HTMLButtonElement).style.transform =
+                      "translateY(-2px)";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                    (e.currentTarget as HTMLButtonElement).style.transform =
+                      "translateY(0)";
                   }}
                 >
                   ❤️ Donate Now

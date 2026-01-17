@@ -4,7 +4,6 @@ import prisma from "../utils/prisma";
 export const getDashboardStats = async (_req: Request, res: Response) => {
   try {
     const totalUsers = await prisma.user.count({ where: { role: "USER" } });
-    const totalRegistrations = await prisma.registration.count();
 
     const donationSum = await prisma.donation.aggregate({
       where: { status: "SUCCESS" },
@@ -13,7 +12,6 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
 
     res.json({
       totalUsers,
-      totalRegistrations,
       totalDonations: donationSum._sum.amount || 0,
     });
   } catch (err) {
@@ -24,13 +22,8 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
 
 export const getAllRegistrations = async (_req: Request, res: Response) => {
   try {
-    const registrations = await prisma.registration.findMany({
-      include: {
-        user: {
-          select: { id: true, name: true, email: true },
-        },
-      },
-      orderBy: { createdAt: "desc" },
+    const registrations = await prisma.user.findMany({
+      where: { role: "USER" },
     });
 
     res.json({ registrations });

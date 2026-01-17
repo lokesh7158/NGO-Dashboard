@@ -18,25 +18,17 @@ model Donation {
   user           User           @relation(fields: [userId], references: [id])
 }
 
-model Registration {
-  id             Int      @id @default(autoincrement())
-  phone          String?
-  address        String?
-  additionalInfo String?
-  createdAt      DateTime @default(now())
-  userId         Int      @unique
-  user           User     @relation(fields: [userId], references: [id])
-}
-
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  role         Role          @default(USER)
-  createdAt    DateTime      @default(now())
-  passwordHash String
-  Donations    Donation[]
-  Registration Registration?
+  id             Int        @id @default(autoincrement())
+  name           String
+  email          String     @unique
+  role           Role       @default(USER)
+  createdAt      DateTime   @default(now())
+  passwordHash   String
+  additionalInfo String?
+  address        String?
+  phone          String?
+  Donations      Donation[]
 }
 
 enum DonationStatus {

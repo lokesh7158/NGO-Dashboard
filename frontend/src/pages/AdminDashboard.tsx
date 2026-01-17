@@ -3,12 +3,12 @@ import API from "../api/api";
 
 interface Registration {
   id: string;
-  userId: string;
-  phone: string;
-  address: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
   additionalInfo?: string;
   createdAt: string;
-  user: { id: string; name: string; email: string };
 }
 
 interface Donation {
@@ -21,43 +21,46 @@ interface Donation {
   user: { id: string; name: string; email: string };
 }
 
+interface DashboardStats {
+  totalUsers: number;
+  totalDonations: number;
+}
+
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
-  const [activeTab, setActiveTab] = useState<"overview" | "registrations" | "donations">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "registrations" | "donations"
+  >("overview");
+
   const [filterEmail, setFilterEmail] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
-  // Fetch dashboard stats
   useEffect(() => {
     API.get("/admin/dashboard").then((res) => setStats(res.data));
   }, []);
 
-  // Fetch registrations
   useEffect(() => {
     if (activeTab === "registrations") {
       API.get("/admin/registrations").then((res) =>
-        setRegistrations(res.data.registrations)
+        setRegistrations(res.data.registrations),
       );
     }
   }, [activeTab]);
 
-  // Fetch donations
   useEffect(() => {
     if (activeTab === "donations") {
       API.get("/admin/donations").then((res) =>
-        setDonations(res.data.donations)
+        setDonations(res.data.donations),
       );
     }
   }, [activeTab]);
 
-  // Filter registrations
   const filteredRegistrations = registrations.filter((reg) =>
-    reg.user.email.toLowerCase().includes(filterEmail.toLowerCase())
+    reg.email.toLowerCase().includes(filterEmail.toLowerCase()),
   );
 
-  // Filter donations
   const filteredDonations = donations.filter((don) => {
     const emailMatch = don.user.email
       .toLowerCase()
@@ -66,31 +69,58 @@ const AdminDashboard = () => {
     return emailMatch && statusMatch;
   });
 
-  // Calculate aggregated donation amount
-  const totalDonationAmount = donations.reduce((sum, don) => {
-    if (don.status === "SUCCESS") return sum + don.amount;
-    return sum;
-  }, 0);
+  const totalDonationAmount = donations.reduce(
+    (sum, d) => (d.status === "SUCCESS" ? sum + d.amount : sum),
+    0,
+  );
 
-  // Export registrations as CSV
   const exportRegistrationsCSV = () => {
     const headers = ["ID", "Name", "Email", "Phone", "Address", "Date"];
-    const rows = filteredRegistrations.map((reg) => [
-      reg.id,
-      reg.user.name,
-      reg.user.email,
-      reg.phone,
-      reg.address,
-      new Date(reg.createdAt).toLocaleDateString(),
+    const rows = filteredRegistrations.map((r) => [
+      r.id,
+      r.name,
+      r.email,
+      r.phone || "",
+      r.address || "",
+      new Date(r.createdAt).toLocaleDateString(),
     ]);
 
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
+    downloadCSV("registrations.csv", headers, rows);
+  };
+
+  const exportDonationsCSV = () => {
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Amount",
+      "Status",
+      "Transaction ID",
+      "Date & Time",
+    ];
+
+    const rows = filteredDonations.map((d) => [
+      d.id,
+      d.user.name,
+      d.user.email,
+      d.amount,
+      d.status,
+      d.transactionId || "",
+      new Date(d.createdAt).toLocaleString(),
+    ]);
+
+    downloadCSV("donations.csv", headers, rows);
+  };
+
+  const downloadCSV = (filename: string, headers: string[], rows: any[][]) => {
+    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "registrations.csv";
+    a.download = filename;
     a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -98,7 +128,7 @@ const AdminDashboard = () => {
       style={{
         padding: "30px 20px",
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)",
+        background: "linear-gradient(135deg, #0a0e27, #1a1f3a)",
       }}
     >
       <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
@@ -106,7 +136,7 @@ const AdminDashboard = () => {
           style={{
             fontSize: "36px",
             marginBottom: "30px",
-            background: "linear-gradient(135deg, #00d4ff 0%, #00f0ff 100%)",
+            background: "linear-gradient(135deg, #00d4ff, #00f0ff)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
           }}
@@ -114,444 +144,189 @@ const AdminDashboard = () => {
           Admin Dashboard
         </h1>
 
-        {/* Tab Navigation */}
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            marginBottom: "30px",
-            borderBottom: "2px solid #2d3561",
-            paddingBottom: "15px",
-          }}
-        >
+        <div style={{ display: "flex", gap: 10, marginBottom: 30 }}>
           {(["overview", "registrations", "donations"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               style={{
                 padding: "12px 24px",
-                fontSize: "15px",
-                fontWeight: "600",
-                textTransform: "capitalize",
+                fontWeight: 600,
+                borderRadius: 6,
+                cursor: "pointer",
+                border: "1px solid #2d3561",
                 background:
                   activeTab === tab
-                    ? "linear-gradient(135deg, #00d4ff 0%, #00a8d8 100%)"
+                    ? "linear-gradient(135deg, #00d4ff, #00a8d8)"
                     : "transparent",
                 color: activeTab === tab ? "#0a0e27" : "#7a8ab3",
-                border: activeTab === tab ? "none" : "1px solid #2d3561",
-                borderRadius: "6px",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
               }}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab.toUpperCase()}
             </button>
           ))}
         </div>
 
-        {/* Overview Tab */}
-        {activeTab === "overview" && (
-          <div>
-            <h2 style={{ fontSize: "24px", marginBottom: "25px", color: "#ffffff" }}>
-              Dashboard Overview
-            </h2>
-            {stats && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                  gap: "20px",
-                }}
-              >
-                {[
-                  { label: "Total Users", value: stats.totalUsers, icon: "👥", color: "#00d4ff" },
-                  {
-                    label: "Total Registrations",
-                    value: stats.totalRegistrations,
-                    icon: "📋",
-                    color: "#00ff88",
-                  },
-                  {
-                    label: "Total Donations",
-                    value: `₹${stats.totalDonations}`,
-                    icon: "💰",
-                    color: "#ffa500",
-                  },
-                ].map((stat, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      padding: "25px",
-                      borderRadius: "12px",
-                      background: "linear-gradient(135deg, #141928 0%, #1a2244 100%)",
-                      border: "1px solid #2d3561",
-                      boxShadow: `0 0 20px ${stat.color}20`,
-                      transition: "all 0.3s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLDivElement).style.transform = "translateY(-5px)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = `0 10px 30px ${stat.color}40`;
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 20px ${stat.color}20`;
-                    }}
-                  >
-                    <div style={{ fontSize: "32px", marginBottom: "10px" }}>{stat.icon}</div>
-                    <p
-                      style={{
-                        margin: "0 0 10px 0",
-                        fontSize: "13px",
-                        color: "#7a8ab3",
-                        textTransform: "uppercase",
-                        letterSpacing: "1px",
-                      }}
-                    >
-                      {stat.label}
-                    </p>
-                    <h3
-                      style={{
-                        margin: "0",
-                        fontSize: "32px",
-                        color: stat.color,
-                        fontWeight: "700",
-                      }}
-                    >
-                      {stat.value}
-                    </h3>
-                  </div>
-                ))}
-              </div>
-            )}
+        {activeTab === "overview" && stats && (
+          <div style={{ display: "flex", gap: 20 }}>
+            <StatCard label="Total Users" value={stats.totalUsers} icon="👥" />
+            <StatCard
+              label="Total Donations"
+              value={`₹${stats.totalDonations}`}
+              icon="💰"
+            />
           </div>
         )}
 
-        {/* Registrations Tab */}
         {activeTab === "registrations" && (
-          <div>
-            <h2 style={{ fontSize: "24px", marginBottom: "25px", color: "#ffffff" }}>
-              Registration Management
-            </h2>
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                marginBottom: "25px",
-                flexWrap: "wrap",
-              }}
-            >
+          <>
+            <div style={{ marginBottom: 15 }}>
               <input
-                type="text"
-                placeholder="Filter by email..."
+                placeholder="Filter by email"
                 value={filterEmail}
                 onChange={(e) => setFilterEmail(e.target.value)}
-                style={{
-                  flex: 1,
-                  minWidth: "250px",
-                  padding: "12px 16px",
-                  fontSize: "14px",
-                }}
+                style={{ padding: 12, width: 280 }}
               />
               <button
                 onClick={exportRegistrationsCSV}
-                style={{
-                  padding: "12px 24px",
-                  fontSize: "15px",
-                  fontWeight: "600",
-                  background: "linear-gradient(135deg, #00ff88 0%, #00cc66 100%)",
-                  color: "#0a0e27",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                }}
+                style={{ marginLeft: 10 }}
               >
-                📥 Export CSV
+                Export CSV
               </button>
             </div>
-            <div
-              style={{
-                overflowX: "auto",
-                borderRadius: "12px",
-                border: "1px solid #2d3561",
-                backgroundColor: "#141928",
-              }}
-            >
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                }}
-              >
-                <thead>
-                  <tr style={{ backgroundColor: "#1a2244" }}>
-                    {["Name", "Email", "Phone", "Address", "Date"].map((header) => (
-                      <th
-                        key={header}
-                        style={{
-                          padding: "15px 16px",
-                          textAlign: "left",
-                          fontSize: "13px",
-                          fontWeight: "700",
-                          color: "#00d4ff",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          borderBottom: "2px solid #2d3561",
-                        }}
-                      >
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRegistrations.length > 0 ? (
-                    filteredRegistrations.map((reg, idx) => (
-                      <tr
-                        key={reg.id}
-                        style={{
-                          backgroundColor: idx % 2 === 0 ? "#0f131f" : "#141928",
-                          borderBottom: "1px solid #2d3561",
-                          transition: "all 0.3s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                            "#1f2a45";
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                            idx % 2 === 0 ? "#0f131f" : "#141928";
-                        }}
-                      >
-                        <td style={{ padding: "15px 16px", color: "#ffffff" }}>
-                          {reg.user.name}
-                        </td>
-                        <td style={{ padding: "15px 16px", color: "#7a8ab3" }}>
-                          {reg.user.email}
-                        </td>
-                        <td style={{ padding: "15px 16px", color: "#ffffff" }}>
-                          {reg.phone}
-                        </td>
-                        <td style={{ padding: "15px 16px", color: "#ffffff" }}>
-                          {reg.address}
-                        </td>
-                        <td style={{ padding: "15px 16px", color: "#7a8ab3" }}>
-                          {new Date(reg.createdAt).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        style={{
-                          padding: "30px",
-                          textAlign: "center",
-                          color: "#7a8ab3",
-                          fontSize: "14px",
-                        }}
-                      >
-                        No registrations found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+
+            <SimpleTable
+              headers={["Name", "Email", "Phone", "Address", "Date"]}
+              rows={filteredRegistrations.map((r) => [
+                r.name,
+                r.email,
+                r.phone || "—",
+                r.address || "—",
+                new Date(r.createdAt).toLocaleDateString(),
+              ])}
+            />
+          </>
         )}
 
-        {/* Donations Tab */}
         {activeTab === "donations" && (
-          <div>
-            <h2 style={{ fontSize: "24px", marginBottom: "25px", color: "#ffffff" }}>
-              Donation Management
-            </h2>
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                marginBottom: "25px",
-                flexWrap: "wrap",
-              }}
-            >
+          <>
+            <div style={{ marginBottom: 15 }}>
               <input
-                type="text"
-                placeholder="Filter by email..."
+                placeholder="Filter by email"
                 value={filterEmail}
                 onChange={(e) => setFilterEmail(e.target.value)}
-                style={{
-                  flex: 1,
-                  minWidth: "250px",
-                  padding: "12px 16px",
-                  fontSize: "14px",
-                }}
+                style={{ padding: 12, marginRight: 10 }}
               />
+
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                style={{
-                  padding: "12px 16px",
-                  fontSize: "14px",
-                  minWidth: "180px",
-                }}
+                style={{ padding: 12 }}
               >
                 <option value="">All Status</option>
-                <option value="SUCCESS">✓ SUCCESS</option>
-                <option value="PENDING">⏳ PENDING</option>
-                <option value="FAILED">✗ FAILED</option>
+                <option value="SUCCESS">SUCCESS</option>
+                <option value="PENDING">PENDING</option>
+                <option value="FAILED">FAILED</option>
               </select>
+
+              <button onClick={exportDonationsCSV} style={{ marginLeft: 10 }}>
+                Export CSV
+              </button>
             </div>
 
-            <div
-              style={{
-                padding: "25px",
-                marginBottom: "25px",
-                borderRadius: "12px",
-                background: "linear-gradient(135deg, #0d4d1a 0%, #1a6b2f 100%)",
-                border: "1px solid #2d5a3a",
-                boxShadow: "0 0 20px #00ff8820",
-              }}
-            >
-              <p
-                style={{
-                  margin: "0 0 10px 0",
-                  fontSize: "13px",
-                  color: "#7ae8a8",
-                  textTransform: "uppercase",
-                  letterSpacing: "1px",
-                }}
-              >
-                💰 Total Donation Amount (Successful)
-              </p>
-              <h3
-                style={{
-                  margin: "0",
-                  fontSize: "36px",
-                  color: "#00ff88",
-                  fontWeight: "700",
-                }}
-              >
-                ₹{totalDonationAmount.toLocaleString()}
-              </h3>
-            </div>
+            <h2>₹{totalDonationAmount}</h2>
 
-            <div
-              style={{
-                overflowX: "auto",
-                borderRadius: "12px",
-                border: "1px solid #2d3561",
-                backgroundColor: "#141928",
-              }}
-            >
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#1a2244" }}>
-                    {["Name", "Email", "Amount", "Status", "Transaction ID", "Date & Time"].map(
-                      (header) => (
-                        <th
-                          key={header}
-                          style={{
-                            padding: "15px 16px",
-                            textAlign: "left",
-                            fontSize: "13px",
-                            fontWeight: "700",
-                            color: "#00d4ff",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                            borderBottom: "2px solid #2d3561",
-                          }}
-                        >
-                          {header}
-                        </th>
-                      )
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDonations.length > 0 ? (
-                    filteredDonations.map((don, idx) => (
-                      <tr
-                        key={don.id}
-                        style={{
-                          backgroundColor: idx % 2 === 0 ? "#0f131f" : "#141928",
-                          borderBottom: "1px solid #2d3561",
-                          transition: "all 0.3s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                            "#1f2a45";
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                            idx % 2 === 0 ? "#0f131f" : "#141928";
-                        }}
-                      >
-                        <td style={{ padding: "15px 16px", color: "#ffffff" }}>
-                          {don.user.name}
-                        </td>
-                        <td style={{ padding: "15px 16px", color: "#7a8ab3" }}>
-                          {don.user.email}
-                        </td>
-                        <td style={{ padding: "15px 16px", color: "#00ff88", fontWeight: "600" }}>
-                          ₹{don.amount}
-                        </td>
-                        <td
-                          style={{
-                            padding: "15px 16px",
-                            fontWeight: "600",
-                            borderRadius: "6px",
-                            color:
-                              don.status === "SUCCESS"
-                                ? "#00ff88"
-                                : don.status === "FAILED"
-                                  ? "#ff6b6b"
-                                  : "#ffa500",
-                          }}
-                        >
-                          {don.status === "SUCCESS"
-                            ? "✓ SUCCESS"
-                            : don.status === "FAILED"
-                              ? "✗ FAILED"
-                              : "⏳ PENDING"}
-                        </td>
-                        <td style={{ padding: "15px 16px", color: "#7a8ab3", fontFamily: "monospace" }}>
-                          {don.transactionId || "—"}
-                        </td>
-                        <td style={{ padding: "15px 16px", color: "#7a8ab3", fontSize: "13px" }}>
-                          {new Date(don.createdAt).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        style={{
-                          padding: "30px",
-                          textAlign: "center",
-                          color: "#7a8ab3",
-                          fontSize: "14px",
-                        }}
-                      >
-                        No donations found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            <SimpleTable
+              headers={[
+                "Name",
+                "Email",
+                "Amount",
+                "Status",
+                "Transaction ID",
+                "Date & Time",
+              ]}
+              rows={filteredDonations.map((d) => [
+                d.user.name,
+                d.user.email,
+                `₹${d.amount}`,
+                d.status,
+                d.transactionId || "—",
+                new Date(d.createdAt).toLocaleString(),
+              ])}
+            />
+          </>
         )}
       </div>
     </div>
   );
 };
+
+const StatCard = ({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: any;
+  icon: string;
+}) => (
+  <div
+    style={{
+      padding: 25,
+      borderRadius: 12,
+      background: "#141928",
+      border: "1px solid #2d3561",
+      minWidth: 280,
+    }}
+  >
+    <div style={{ fontSize: 28 }}>{icon}</div>
+    <p style={{ color: "#7a8ab3" }}>{label}</p>
+    <h2 style={{ color: "#00d4ff" }}>{value}</h2>
+  </div>
+);
+
+const SimpleTable = ({
+  headers,
+  rows,
+}: {
+  headers: string[];
+  rows: any[][];
+}) => (
+  <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 15 }}>
+    <thead>
+      <tr>
+        {headers.map((h) => (
+          <th
+            key={h}
+            style={{
+              textAlign: "left",
+              padding: 10,
+              borderBottom: "1px solid #2d3561",
+            }}
+          >
+            {h}
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row, i) => (
+        <tr key={i}>
+          {row.map((cell, j) => (
+            <td
+              key={j}
+              style={{
+                padding: 10,
+                borderBottom: "1px solid #1f2a45",
+              }}
+            >
+              {cell}
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
 
 export default AdminDashboard;
