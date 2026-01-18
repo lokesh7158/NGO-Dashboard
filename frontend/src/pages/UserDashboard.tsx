@@ -401,7 +401,7 @@ const UserDashboard = () => {
               <div className="metric-card">
                 <div className="metric-label">Total Donated</div>
                 <div className="metric-value">
-                  ₹{(totalDonated / 1000).toFixed(1)}K
+                  ₹{totalDonated.toLocaleString()}
                 </div>
                 <div className="metric-change">
                   +₹
@@ -521,7 +521,7 @@ const UserDashboard = () => {
               <div className="metric-card">
                 <div className="metric-label">💚 Total Contribution</div>
                 <div className="metric-value">
-                  ₹{(totalDonated / 100000).toFixed(2)}L
+                  ₹{totalDonated.toLocaleString()}
                 </div>
                 <div className="metric-change">Your impact</div>
               </div>

@@ -197,7 +197,7 @@ export const paymentNotify = async (req: any, res: Response) => {
       req.body;
 
     if (!order_id || !status_code) {
-      return res.status(400).json({ message: "Invalid payload" });
+      return res.status(400).send("Invalid payload");
     }
 
     const donationId = parseInt(order_id, 10);
@@ -206,7 +206,7 @@ export const paymentNotify = async (req: any, res: Response) => {
     });
 
     if (!donation) {
-      return res.status(404).json({ message: "Donation not found" });
+      return res.status(404).send("Donation not found");
     }
 
     // Status code 2 = success
@@ -219,24 +219,28 @@ export const paymentNotify = async (req: any, res: Response) => {
       newStatus = DonationStatus.PENDING;
     }
 
-    if (md5sig && process.env.PAYHERE_MERCHANT_SECRET) {
-      const { verifyPayHereSignature } = await import("../utils/payhere");
-      const merchantId = process.env.PAYHERE_MERCHANT_ID || "";
-      const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
+    try {
+      if (md5sig && process.env.PAYHERE_MERCHANT_SECRET) {
+        const { verifyPayHereSignature } = await import("../utils/payhere");
+        const merchantId = process.env.PAYHERE_MERCHANT_ID || "";
+        const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
 
-      const isValid = verifyPayHereSignature(
-        merchantId,
-        order_id,
-        payhere_amount || donation.amount.toString(),
-        "LKR",
-        status_code,
-        md5sig,
-        merchantSecret,
-      );
+        const isValid = verifyPayHereSignature(
+          merchantId,
+          order_id,
+          payhere_amount || donation.amount.toString(),
+          "LKR",
+          status_code,
+          md5sig,
+          merchantSecret,
+        );
 
-      if (!isValid) {
-        console.warn(`Invalid PayHere signature for order ${order_id}`);
+        if (!isValid) {
+          console.warn(`Invalid PayHere signature for order ${order_id}`);
+        }
       }
+    } catch (sigErr) {
+      console.error("Signature verification error:", sigErr);
     }
 
     await prisma.donation.update({
@@ -249,7 +253,7 @@ export const paymentNotify = async (req: any, res: Response) => {
 
     res.send("OK");
   } catch (err) {
-    console.error(err);
-    res.send("ERROR");
+    console.error("PayHere Notify error:", err);
+    res.status(500).send("ERROR");
   }
 };

@@ -194,14 +194,8 @@ const AdminDashboard = () => {
           <>
             <div className="metrics-grid">
               <div className="metric-card">
-                <div className="metric-label">Total Contributors</div>
-                <div className="metric-value">{stats.totalUsers}</div>
-                <div className="metric-change">+12.0% New contributors</div>
-              </div>
-
-              <div className="metric-card">
                 <div className="metric-label">Total Donations</div>
-                <div className="metric-value">₹{(stats.totalDonations / 100000).toFixed(1)}L</div>
+                <div className="metric-value">₹{stats.totalDonations.toLocaleString()}</div>
                 <div className="metric-change">+5.0% This month</div>
               </div>
 
@@ -309,7 +303,7 @@ const AdminDashboard = () => {
               <div>
                 <h2 className="section-title">💰 Donation Management</h2>
                 <div style={{ fontSize: "24px", fontWeight: "700", color: "#00d4ff", marginTop: "8px" }}>
-                  ₹{(totalDonationAmount / 100000).toFixed(2)}L Total
+                  ₹{totalDonationAmount.toLocaleString()} Total
                 </div>
               </div>
               <button className="btn btn-secondary btn-small" onClick={exportDonationsCSV}>
