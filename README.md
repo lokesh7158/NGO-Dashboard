@@ -63,18 +63,25 @@ npm install
 
 ## Database Setup
 
-### Initialize Prisma
-After installing backend dependencies, set up the database:
+### 1. Set up Environment Variables
+Before initializing Prisma, ensure you have created the `.env` file in the `backend/` directory with your database connection string:
 
 ```bash
 cd backend
+# Create .env file with DATABASE_URL (see Environment Setup section below)
+```
+
+### 2. Initialize Prisma
+After setting up the environment variables, initialize the database:
+
+```bash
 npx prisma db pull
 npx prisma generate
 ```
 - `npx prisma db pull`: Introspects your database and generates the Prisma schema
 - `npx prisma generate`: Generates the Prisma client based on your schema
 
-### Optional: Open Prisma Studio
+### 3. Optional: Open Prisma Studio
 To view and edit your database data:
 ```bash
 npx prisma studio
