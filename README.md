@@ -11,7 +11,6 @@ A modern full-stack web application for managing NGO operations, donations, and 
 - [Running the Project](#running-the-project)
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
-- [Contributing](#contributing)
 
 ## Features
 - User authentication and authorization
@@ -61,6 +60,26 @@ npm install
 cd ../frontend
 npm install
 ```
+
+## Database Setup
+
+### Initialize Prisma
+After installing backend dependencies, set up the database:
+
+```bash
+cd backend
+npx prisma db pull
+npx prisma generate
+```
+- `npx prisma db pull`: Introspects your database and generates the Prisma schema
+- `npx prisma generate`: Generates the Prisma client based on your schema
+
+### Optional: Open Prisma Studio
+To view and edit your database data:
+```bash
+npx prisma studio
+```
+This will open Prisma Studio at `http://localhost:5555`
 
 ## Environment Setup
 
@@ -217,6 +236,3 @@ npm run dev -- --port 3001
 ### CORS Errors
 - Verify `CORS_ORIGIN` in backend `.env` matches your frontend URL
 - Check that both servers are running on the correct ports
-
-
-**Happy coding! 🚀**
