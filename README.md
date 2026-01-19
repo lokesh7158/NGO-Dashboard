@@ -95,28 +95,23 @@ Create a `.env` file in the `backend/` directory with the following variables:
 
 ```env
 # Database Configuration
-DATABASE_URL=your_database_connection_string
+DATABASE_URL=postgresql://<your_connection_string>
 
 # JWT Configuration
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRY=7d
+JWT_SECRET=your_jwt_secret
 
 # Server Configuration
 PORT=5000
-NODE_ENV=development
 
-# Authentication
-AUTH_SALT_ROUNDS=10
-
-# Payment Gateway (PayHere)
+# PayHere Payment Gateway
 PAYHERE_MERCHANT_ID=your_merchant_id
 PAYHERE_MERCHANT_SECRET=your_merchant_secret
-PAYHERE_RETURN_URL=http://localhost:3000/donation-status
-PAYHERE_CANCEL_URL=http://localhost:3000/donation-cancelled
-PAYHERE_NOTIFY_URL=http://localhost:5000/api/donations/webhook
 
-# CORS Configuration
-CORS_ORIGIN=http://localhost:3000
+# Base URL for backend callbacks
+BASE_URL=your_backend_base_url
+
+# Frontend redirect URL after payment
+FRONTEND_URL=your_frontend_url
 ```
 
 ### Frontend Environment Variables
@@ -124,7 +119,7 @@ Create a `.env` file in the `frontend/` directory with the following variables:
 
 ```env
 # API Configuration
-VITE_API_URL=http://localhost:5000/api
+VITE_BASE_URL=http://localhost:5000
 
 # Application Configuration
 VITE_APP_NAME=NGO Dashboard
